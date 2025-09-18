@@ -21,6 +21,9 @@ if uploaded_file:
         
         # Membersihkan nama kolom (strip spasi dan ubah ke huruf kapital untuk konsistensi)
         df.columns = df.columns.str.strip().str.title()
+
+        # Hapus semua baris yang seluruh kolomnya kosong
+        df = df.dropna(how='all')
         
         # Menampilkan kolom yang tersedia (untuk debugging)
         st.sidebar.info(f"Kolom yang terdeteksi: {', '.join(df.columns.tolist())}")
@@ -305,3 +308,4 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
