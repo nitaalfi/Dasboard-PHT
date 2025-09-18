@@ -36,6 +36,17 @@ if uploaded_file:
 
         # Hapus semua baris yang seluruh kolomnya kosong
         df = df.dropna(how='all')
+
+        # Cari baris header yang benar
+        temp_df = pd.read_excel(uploaded_file, engine="openpyxl", header=None)
+        header_row = temp_df[temp_df.apply(lambda r: r.astype(str).str.contains("No. Urut", case=False).any(), axis=1)].index[0]
+
+        # Baca ulang dengan header yang tepat
+        df = pd.read_excel(uploaded_file, engine="openpyxl", skiprows=header_row)
+
+        # Bersihkan kolom
+        df.columns = df.columns.str.strip().str.title()
+
         
         # Menampilkan kolom yang tersedia (untuk debugging)
         st.sidebar.info(f"Kolom yang terdeteksi: {', '.join(df.columns.tolist())}")
@@ -320,6 +331,7 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
 
