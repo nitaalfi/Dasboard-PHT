@@ -4,12 +4,28 @@ import numpy as np
 from io import BytesIO
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Dashboard Monitoring Aset Perhutani", layout="wide")
+# --- Konfigurasi Halaman ---
+st.set_page_config(
+    page_title="Dashboard Monitoring Aset Perhutani",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-st.title("Dashboard Monitoring Aset Perhutani")
+# --- Tambahkan Logo + Judul ---
+col1, col2 = st.columns([1, 5])
+with col1:
+    st.image("logo.webp", width=100)  # logo yang sudah diupload
+with col2:
+    st.markdown(
+        "<h1 style='color:#1b5e20; margin-bottom:0;'>Dashboard Monitoring Aset Perhutani</h1>",
+        unsafe_allow_html=True
+    )
+    st.caption("Visualisasi dan Analisis Data Aset")
 
 # --- Sidebar ---
-st.sidebar.header("Menu")
+st.sidebar.header("📂 Menu Utama")
+uploaded_file = st.sidebar.file_uploader("Upload file Excel data aset", type=["xlsx"])
+
 
 # Upload file Excel
 uploaded_file = st.sidebar.file_uploader("Upload file Excel data aset", type=["xlsx"])
@@ -308,4 +324,5 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
