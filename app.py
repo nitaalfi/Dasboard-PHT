@@ -26,10 +26,6 @@ with col2:
 st.sidebar.header("📂 Menu Utama")
 uploaded_file = st.sidebar.file_uploader("Upload file Excel data aset", type=["xlsx"])
 
-
-# Upload file Excel
-uploaded_file = st.sidebar.file_uploader("Upload file Excel data aset", type=["xlsx"])
-
 if uploaded_file:
     try:
         # Membaca data Excel
@@ -324,5 +320,6 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
