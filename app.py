@@ -56,7 +56,7 @@ if uploaded_file:
         
         # Filter KPH - handle berbagai kemungkinan nama kolom
         kph_col = None
-        for col in ['Kph', 'KPH', 'kph', 'Kesatuan Pengelolaan Hutan']:
+        for col in [ 'Nama Satker','Kph', 'KPH', 'kph', 'Kesatuan Pengelolaan Hutan']:
             if col in df.columns:
                 kph_col = col
                 break
@@ -70,7 +70,7 @@ if uploaded_file:
         
         # Filter Kondisi - handle berbagai kemungkinan nama kolom
         kondisi_col = None
-        for col in ['Kondisi', 'Status', 'Keadaan', 'Condition']:
+        for col in ['Kondisi', 'Kondisi Aset', 'Keadaan', 'Condition']:
             if col in df.columns:
                 kondisi_col = col
                 break
@@ -331,6 +331,7 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
 
