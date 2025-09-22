@@ -126,7 +126,15 @@ if uploaded_file:
         
         # Konversi kolom nilai ke numeric jika ada
         if nilai_col:
-            filtered_df[nilai_col] = pd.to_numeric(filtered_df[nilai_col], errors='coerce')
+        # Bersihkan teks: buang Rp, titik ribuan, spasi, dll
+        filtered_df[nilai_col] = (
+        filtered_df[nilai_col]
+        .astype(str)  # ubah ke string biar bisa diproses
+        .str.replace(r'[^0-9,.-]', '', regex=True)  # hapus semua kecuali angka dan tanda desimal
+        .str.replace(',', '.', regex=False)         # ganti koma jadi titik (kalau ada)
+    )
+    filtered_df[nilai_col] = pd.to_numeric(filtered_df[nilai_col], errors='coerce')
+
         
         # Sidebar - Export data filtered
         def to_excel(df_export):
@@ -286,5 +294,6 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
