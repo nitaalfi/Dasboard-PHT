@@ -84,7 +84,7 @@ if uploaded_file:
         
         # Filter Tanggal Perolehan
         tgl_col = None
-        for col in ['Tanggal Perolehan', 'Tanggal', 'Date', 'Tanggal Pembelian']:
+        for col in ['Tanggal Perolehan', 'Tanggal','Tanggal*', 'Date', 'Tanggal Pembelian']:
             if col in df.columns:
                 tgl_col = col
                 break
@@ -111,7 +111,7 @@ if uploaded_file:
         if kondisi_col and selected_kondisi:
             filtered_df = filtered_df[filtered_df[kondisi_col].astype(str).isin(selected_kondisi)]
         
-        if tahun_col and selected_tahun:
+        if tgl_col and selected_tgl:
             filtered_df = filtered_df[filtered_df[tahun_col].astype(int).isin(selected_tahun)]
         
         if jenis_col and selected_jenis:
