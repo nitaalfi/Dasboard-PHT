@@ -31,7 +31,11 @@ uploaded_file = st.sidebar.file_uploader("Upload file Excel data aset", type=["x
 
 if uploaded_file:
     try:
-        # Membaca data Excel
+        # Membaca data Excel (Opsional: Cache untuk performa)
+        # @st.cache_data
+        # def load_data(file):
+        #     return pd.read_excel(file, engine='openpyxl')
+        # df = load_data(uploaded_file)
         df = pd.read_excel(uploaded_file, engine='openpyxl')
         
         # Membersihkan nama kolom (strip spasi dan ubah ke huruf kapital untuk konsistensi)
@@ -54,6 +58,9 @@ if uploaded_file:
 
         # Bersihkan kolom
         df.columns = df.columns.str.strip().str.title()
+
+        # Hapus baris kosong lagi setelah skiprows
+        df = df.dropna(how='all')
 
         # Menampilkan kolom yang tersedia (untuk debugging)
         st.sidebar.info(f"Kolom yang terdeteksi: {', '.join(df.columns.tolist())}")
@@ -113,9 +120,9 @@ if uploaded_file:
             try:
                 # Ekstrak tahun dari kolom tanggal
                 df['Tahun'] = pd.to_datetime(df[tgl_col], errors='coerce').dt.year
-                tahun_non_null = df['Tahun'].dropna().astype(int).unique()
-                tahun_list = sorted(tahun_non_null)
-                if tahun_list:
+                tahun_non_null = df['Tahun'].dropna()
+                if not tahun_non_null.empty:
+                    tahun_list = sorted(tahun_non_null.astype(int).unique())
                     selected_tahun = st.sidebar.multiselect("Pilih Tahun Perolehan", options=tahun_list, default=tahun_list)
                 else:
                     st.sidebar.warning("Tidak ada tahun valid di kolom tanggal (semua tanggal invalid).")
@@ -127,7 +134,7 @@ if uploaded_file:
         
         tahun_col = 'Tahun'
         
-        # Filter data berdasarkan pilihan
+        # Filter data berdasarkan pilihan (Perbaikan: Handle NaN di tahun)
         filtered_df = df.copy()
         
         if selected_kph and kph_col:
@@ -136,9 +143,14 @@ if uploaded_file:
         if kondisi_col and selected_kondisi:
             filtered_df = filtered_df[filtered_df[kondisi_col].astype(str).isin(selected_kondisi)]
         
-        if tgl_col and selected_tahun and not filtered_df[tahun_col].isna().all():  # Perbaikan: Cek tidak semua NaN
-            valid_tahun = filtered_df[tahun_col].dropna().astype(int)
-            filtered_df = filtered_df[valid_tahun.isin(selected_tahun)]
+        if tgl_col and selected_tahun:
+            # Handle NaN: Fill dengan -1 sementara untuk filter, lalu drop kolom
+            filtered_df[tahun_col] = filtered_df[tahun_col].fillna(-1)
+            valid_mask = filtered_df[tahun_col].astype(int).isin(selected_tahun)
+            filtered_df = filtered_df[valid_mask]
+            # Drop kolom Tahun sementara jika tidak diperlukan
+            if tahun_col not in df.columns:
+                filtered_df = filtered_df.drop(columns=[tahun_col])
         
         if jenis_col and selected_jenis:
             filtered_df = filtered_df[filtered_df[jenis_col].astype(str).isin(selected_jenis)]
@@ -154,27 +166,32 @@ if uploaded_file:
         if nilai_col:
             filtered_df[nilai_col] = pd.to_numeric(filtered_df[nilai_col], errors='coerce')
         
-        # Sidebar - Export data filtered (Perbaikan: Gunakan openpyxl)
+        # Sidebar - Export data filtered (Perbaikan: Try-except dan openpyxl)
         def to_excel(df_export):
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:  # Ganti ke openpyxl
-                df_export.to_excel(writer, index=False, sheet_name='Data Filtered')
-            processed_data = output.getvalue()
-            return processed_data
+            try:
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_export.to_excel(writer, index=False, sheet_name='Data Filtered')
+                processed_data = output.getvalue()
+                return processed_data
+            except Exception as e:
+                st.sidebar.error(f"Error export: {str(e)}")
+                return None
         
         st.sidebar.subheader("Export Data")
         if not filtered_df.empty:
             excel_data = to_excel(filtered_df)
-            st.sidebar.download_button(
-                label="Download Data Filtered ke Excel",
-                data=excel_data,
-                file_name='data_aset_filtered.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
+            if excel_data:
+                st.sidebar.download_button(
+                    label="Download Data Filtered ke Excel",
+                    data=excel_data,
+                    file_name='data_aset_filtered.xlsx',
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
         else:
             st.sidebar.info("Data filter kosong, tidak bisa diexport.")
         
-        # --- Main Page (Sama seperti sebelumnya, tapi dengan perbaikan minor di metric dan grafik) ---
+        # --- Main Page ---
         st.header("Monitoring Data Aset")
         
         # Ringkasan Statistik
@@ -224,6 +241,83 @@ if uploaded_file:
             ax.set_ylabel('Jumlah Aset')
             ax.tick_params(axis='x', rotation=45)
             st.pyplot(fig)
-            plt.close(fig)  # Per fig untuk aman
+            plt.close(fig)  # Bersihkan memori per figure
         else:
-            st.info("Kolom jenis
+            st.info("Kolom jenis aset tidak ditemukan atau data kosong.")
+        
+        # Jumlah aset bermasalah
+        st.subheader("Analisis Kondisi Aset")
+        
+        if kondisi_col and not filtered_df.empty:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Hitung aset bermasalah (tidak baik, termasuk NaN)
+                kondisi_clean = filtered_df[kondisi_col].astype(str).str.lower()
+                mask_bermasalah = ~kondisi_clean.str.contains('baik|bagus|good|excellent|perfect', na=False)
+                jml_bermasalah = mask_bermasalah.sum()
+                st.metric("Jumlah Aset Bermasalah", jml_bermasalah)
+            
+            with col2:
+                # Distribusi kondisi
+                distribusi_kondisi = filtered_df[kondisi_col].value_counts()
+                fig, ax = plt.subplots(figsize=(8, 6))
+                distribusi_kondisi.plot(kind='pie', autopct='%1.1f%%', ax=ax)
+                ax.set_title('Distribusi Kondisi Aset')
+                ax.set_ylabel('')
+                st.pyplot(fig)
+                plt.close(fig)
+        else:
+            st.info("Kolom kondisi tidak ditemukan atau data kosong.")
+        
+        # Analisis Nilai Aset
+        st.subheader("Analisis Nilai Aset")
+        
+        if nilai_col and not filtered_df.empty:
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                total_nilai = filtered_df[nilai_col].sum()
+                st.metric("Total Nilai Perolehan", f"Rp {total_nilai:,.0f}" if not pd.isna(total_nilai) else "Rp 0")
+            
+            with col2:
+                rata_nilai = filtered_df[nilai_col].mean()
+                st.metric("Rata-rata Nilai", f"Rp {rata_nilai:,.0f}" if not pd.isna(rata_nilai) else "Rp 0")
+            
+            with col3:
+                median_nilai = filtered_df[nilai_col].median()
+                st.metric("Median Nilai", f"Rp {median_nilai:,.0f}" if not pd.isna(median_nilai) else "Rp 0")
+            
+            # Nilai tertinggi dan terendah (Perbaikan: Cek data tidak kosong)
+            nilai_clean = filtered_df[nilai_col].dropna()
+            if not nilai_clean.empty:
+                max_nilai = nilai_clean.max()
+                min_nilai = nilai_clean.min()
+                
+                aset_max = filtered_df.loc[filtered_df[nilai_col].idxmax()]  # Lebih aman daripada iloc[0]
+                aset_min = filtered_df.loc[filtered_df[nilai_col].idxmin()]
+                
+                st.markdown("**Aset dengan Nilai Tertinggi:**")
+                st.write(f"Nilai: Rp {max_nilai:,.0f}")
+                if kph_col and kph_col in aset_max:
+                    st.write(f"KPH: {aset_max[kph_col]}")
+                if jenis_col and jenis_col in aset_max:
+                    st.write(f"Jenis: {aset_max[jenis_col]}")
+                
+                st.markdown("**Aset dengan Nilai Terendah:**")
+                st.write(f"Nilai: Rp {min_nilai:,.0f}")
+                if kph_col and kph_col in aset_min:
+                    st.write(f"KPH: {aset_min[kph_col]}")
+                if jenis_col and jenis_col in aset_min:
+                    st.write(f"Jenis: {aset_min[jenis_col]}")
+            else:
+                st.warning("Tidak ada data nilai aset yang valid.")
+        else:
+            st.info("Kolom nilai aset tidak ditemukan atau data kosong.")
+        
+        # Grafik dan Statistik Lanjutan
+        st.header("Statistik dan Grafik Lanjutan")
+        
+        if nilai_col and not filtered_df.empty:
+            nilai_clean = filtered_df[nilai_col].dropna()
+            if not nilai_clean
