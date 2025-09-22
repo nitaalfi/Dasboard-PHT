@@ -56,7 +56,7 @@ if uploaded_file:
         
         # Filter KPH - handle berbagai kemungkinan nama kolom
         kph_col = None
-        for col in [ 'Nama Satker','Kph', 'KPH', 'kph', 'Kesatuan Pengelolaan Hutan']:
+        for col in [ 'Nama Satker','Nama Satker*','Kph', 'KPH', 'kph', 'Kesatuan Pengelolaan Hutan']:
             if col in df.columns:
                 kph_col = col
                 break
@@ -80,13 +80,7 @@ if uploaded_file:
             selected_kondisi = st.sidebar.multiselect(f"Pilih {kondisi_col}", options=kondisi_list, default=kondisi_list)
         else:
             selected_kondisi = []
-        
-        # Filter Tahun Perolehan
-        tahun_col = None
-        for col in ['Tahun Perolehan', 'Tahun', 'Year', 'Tahun Pembelian']:
-            if col in df.columns:
-                tahun_col = col
-                break
+
         
         # Filter Tanggal Perolehan
         tgl_col = None
@@ -94,25 +88,7 @@ if uploaded_file:
             if col in df.columns:
                 tgl_col = col
                 break
-                
-        if tahun_col:
-            # Konversi ke numeric dan handle error
-            df[tahun_col] = pd.to_numeric(df[tahun_col], errors='coerce')
-            tahun_list = sorted(df[tahun_col].dropna().astype(int).unique())
-            selected_tahun = st.sidebar.multiselect(f"Pilih {tahun_col}", options=tahun_list, default=tahun_list)
-        elif tgl_col:
-            # Jika tanggal perolehan, ekstrak tahun
-            try:
-                df['Tahun_Perolehan'] = pd.to_datetime(df[tgl_col], errors='coerce').dt.year
-                tahun_list = sorted(df['Tahun_Perolehan'].dropna().astype(int).unique())
-                selected_tahun = st.sidebar.multiselect("Pilih Tahun Perolehan", options=tahun_list, default=tahun_list)
-                tahun_col = 'Tahun_Perolehan'
-            except Exception as e:
-                st.sidebar.error(f"Gagal memproses kolom tanggal: {str(e)}")
-                selected_tahun = []
-        else:
-            selected_tahun = []
-        
+
         # Filter Jenis Aset
         jenis_col = None
         for col in ['Jenis Aset', 'Jenis Aset', 'Jenis', 'Kategori', 'Tipe', 'Type', 'Klasifikasi']:
@@ -143,7 +119,7 @@ if uploaded_file:
         
         # Menangani kolom nilai aset dengan berbagai nama
         nilai_col = None
-        for col in ['Nilai Aset', 'Nilai', 'Harga', 'Value', 'Nilai Perolehan', 'Harga Perolehan']:
+        for col in ['Nilai Aset','Nilai Aset*', 'Nilai', 'Harga', 'Value', 'Nilai Perolehan', 'Harga Perolehan']:
             if col in df.columns:
                 nilai_col = col
                 break
@@ -331,6 +307,7 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
 
