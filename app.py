@@ -61,16 +61,9 @@ if uploaded_file:
                 kph_col = col
                 break
         
-        if kph_col:
-            kph_list = sorted(df[kph_col].dropna().astype(str).unique())
-            selected_kph = st.sidebar.multiselect("Pilih KPH", options=kph_list, default=kph_list)
-        else:
-            st.sidebar.error("Kolom KPH tidak ditemukan di data.")
-            selected_kph = []
-        
         # Filter Kondisi - handle berbagai kemungkinan nama kolom
         kondisi_col = None
-        for col in ['Kondisi', 'Kondisi Aset', 'Keadaan', 'Condition']:
+        for col in ['Kondisi', 'Kondisi Aset', 'Kondisi Aset*', 'Keadaan', 'Condition']:
             if col in df.columns:
                 kondisi_col = col
                 break
@@ -115,7 +108,7 @@ if uploaded_file:
         
         # Filter Jenis Aset
         jenis_col = None
-        for col in ['Jenis Aset', 'Jenis', 'Kategori', 'Tipe', 'Type', 'Klasifikasi']:
+        for col in ['Jenis Aset', 'Jenis Aset', 'Jenis', 'Kategori', 'Tipe', 'Type', 'Klasifikasi']:
             if col in df.columns:
                 jenis_col = col
                 break
@@ -331,6 +324,7 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
 
