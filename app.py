@@ -265,28 +265,7 @@ if uploaded_file:
                     st.write(f"KPH: {aset_min[kph_col]}")
                 if jenis_col in aset_min:
                     st.write(f"Jenis: {aset_min[jenis_col]}")
-        
-        # Grafik dan Statistik Lanjutan
-        st.header("Statistik dan Grafik Lanjutan")
-        
-        if nilai_col and not filtered_df.empty:
-            # Grafik distribusi nilai aset
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.hist(filtered_df[nilai_col].dropna(), bins=20, alpha=0.7, color='green')
-            ax.set_title('Distribusi Nilai Aset')
-            ax.set_xlabel('Nilai Aset')
-            ax.set_ylabel('Frekuensi')
-            st.pyplot(fig)
-            
-            # Grafik nilai aset per KPH
-            if kph_col:
-                nilai_per_kph = filtered_df.groupby(kph_col)[nilai_col].sum().sort_values(ascending=False)
-                fig, ax = plt.subplots(figsize=(12, 6))
-                nilai_per_kph.plot(kind='bar', ax=ax, color='orange')
-                ax.set_title('Total Nilai Aset per KPH')
-                ax.set_ylabel('Total Nilai (Rp)')
-                ax.tick_params(axis='x', rotation=45)
-                st.pyplot(fig)
+                    
             
             # Grafik rata-rata nilai per jenis aset
             if jenis_col:
@@ -307,3 +286,4 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
