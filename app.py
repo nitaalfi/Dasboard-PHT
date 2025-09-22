@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import numpy as np
 from io import BytesIO
@@ -47,16 +47,15 @@ if uploaded_file:
         # Bersihkan kolom
         df.columns = df.columns.str.strip().str.title()
 
-        
         # Menampilkan kolom yang tersedia (untuk debugging)
         st.sidebar.info(f"Kolom yang terdeteksi: {', '.join(df.columns.tolist())}")
         
         # Sidebar - Monitoring
         st.sidebar.subheader("Monitoring Filter")
         
-        # Filter KPH - handle berbagai kemungkinan nama kolom
+        # Filter KPH
         kph_col = None
-        for col in [ 'Nama Satker','Nama Satker*','Kph', 'KPH', 'kph', 'Kesatuan Pengelolaan Hutan']:
+        for col in ['Nama Satker','Nama Satker*','Kph', 'KPH', 'kph', 'Kesatuan Pengelolaan Hutan']:
             if col in df.columns:
                 kph_col = col
                 break
@@ -68,7 +67,7 @@ if uploaded_file:
             st.sidebar.error("Kolom KPH tidak ditemukan di data.")
             selected_kph = []
         
-        # Filter Kondisi - handle berbagai kemungkinan nama kolom
+        # Filter Kondisi
         kondisi_col = None
         for col in ['Kondisi', 'Kondisi Aset', 'Kondisi Aset*', 'Keadaan', 'Condition']:
             if col in df.columns:
@@ -81,7 +80,6 @@ if uploaded_file:
         else:
             selected_kondisi = []
 
-        
         # Filter Tanggal Perolehan
         tgl_col = None
         for col in ['Tanggal Perolehan', 'Tanggal','Tanggal*', 'Date', 'Tanggal Pembelian']:
@@ -111,31 +109,26 @@ if uploaded_file:
         if kondisi_col and selected_kondisi:
             filtered_df = filtered_df[filtered_df[kondisi_col].astype(str).isin(selected_kondisi)]
         
-        if tgl_col and selected_tgl:
-            filtered_df = filtered_df[filtered_df[tahun_col].astype(int).isin(selected_tahun)]
-        
         if jenis_col and selected_jenis:
             filtered_df = filtered_df[filtered_df[jenis_col].astype(str).isin(selected_jenis)]
         
-        # Menangani kolom nilai aset dengan berbagai nama
+        # Menangani kolom nilai aset
         nilai_col = None
         for col in ['Nilai Aset','Nilai Aset*', 'Nilai', 'Harga', 'Value', 'Nilai Perolehan*','Nilai Perolehan', 'Harga Perolehan']:
             if col in df.columns:
                 nilai_col = col
                 break
         
-        # Konversi kolom nilai ke numeric jika ada
         if nilai_col:
-        # Bersihkan teks: buang Rp, titik ribuan, spasi, dll
-        filtered_df[nilai_col] = (
-        filtered_df[nilai_col]
-        .astype(str)  # ubah ke string biar bisa diproses
-        .str.replace(r'[^0-9,.-]', '', regex=True)  # hapus semua kecuali angka dan tanda desimal
-        .str.replace(',', '.', regex=False)         # ganti koma jadi titik (kalau ada)
-    )
-    filtered_df[nilai_col] = pd.to_numeric(filtered_df[nilai_col], errors='coerce')
+            # Bersihkan isi kolom sebelum konversi ke numeric
+            filtered_df[nilai_col] = (
+                filtered_df[nilai_col]
+                .astype(str)
+                .str.replace(r'[^0-9,.-]', '', regex=True)  # hapus semua kecuali angka, koma, titik, minus
+                .str.replace(',', '.', regex=False)         # ganti koma jadi titik
+            )
+            filtered_df[nilai_col] = pd.to_numeric(filtered_df[nilai_col], errors='coerce')
 
-        
         # Sidebar - Export data filtered
         def to_excel(df_export):
             output = BytesIO()
@@ -174,7 +167,6 @@ if uploaded_file:
                 
         with col3:
             if kondisi_col:
-                # Hitung aset dengan kondisi baik (case insensitive)
                 kondisi_baik = filtered_df[
                     filtered_df[kondisi_col].astype(str).str.lower().str.contains('baik|bagus|good|excellent|perfect')
                 ].shape[0]
@@ -183,7 +175,6 @@ if uploaded_file:
                 st.metric("Aset Kondisi Baik", "Kolom tidak ditemukan")
                 
         with col4:
-            # Hitung data tidak lengkap (minimal 3 kolom kosong)
             kolom_penting = [kph_col, nilai_col, jenis_col, kondisi_col]
             kolom_penting = [col for col in kolom_penting if col is not None and col in filtered_df.columns]
             if kolom_penting:
@@ -206,8 +197,6 @@ if uploaded_file:
             ax.set_ylabel('Jumlah Aset')
             ax.tick_params(axis='x', rotation=45)
             st.pyplot(fig)
-        else:
-            st.info("Kolom jenis aset tidak ditemukan")
         
         # Jumlah aset bermasalah
         st.subheader("Analisis Kondisi Aset")
@@ -216,7 +205,6 @@ if uploaded_file:
             col1, col2 = st.columns(2)
             
             with col1:
-                # Hitung aset bermasalah
                 kondisi_bermasalah = filtered_df[
                     ~filtered_df[kondisi_col].astype(str).str.lower().str.contains('baik|bagus|good|excellent|perfect')
                 ]
@@ -224,15 +212,12 @@ if uploaded_file:
                 st.metric("Jumlah Aset Bermasalah", jml_bermasalah)
             
             with col2:
-                # Distribusi kondisi
                 distribusi_kondisi = filtered_df[kondisi_col].value_counts()
                 fig, ax = plt.subplots(figsize=(8, 6))
                 distribusi_kondisi.plot(kind='pie', autopct='%1.1f%%', ax=ax)
                 ax.set_title('Distribusi Kondisi Aset')
                 ax.set_ylabel('')
                 st.pyplot(fig)
-        else:
-            st.info("Kolom kondisi tidak ditemukan")
         
         # Analisis Nilai Aset
         st.subheader("Analisis Nilai Aset")
@@ -252,7 +237,6 @@ if uploaded_file:
                 median_nilai = filtered_df[nilai_col].median()
                 st.metric("Median Nilai", f"Rp {median_nilai:,.0f}")
             
-            # Nilai tertinggi dan terendah
             if not filtered_df.empty:
                 max_nilai = filtered_df[nilai_col].max()
                 min_nilai = filtered_df[nilai_col].min()
@@ -274,8 +258,6 @@ if uploaded_file:
                 if jenis_col in aset_min:
                     st.write(f"Jenis: {aset_min[jenis_col]}")
                     
-            
-            # Grafik rata-rata nilai per jenis aset
             if jenis_col:
                 rata_per_jenis = filtered_df.groupby(jenis_col)[nilai_col].mean().sort_values(ascending=False)
                 fig, ax = plt.subplots(figsize=(12, 6))
@@ -294,6 +276,3 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
-
-
-
