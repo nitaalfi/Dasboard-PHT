@@ -119,7 +119,7 @@ if uploaded_file:
         
         # Menangani kolom nilai aset dengan berbagai nama
         nilai_col = None
-        for col in ['Nilai Aset','Nilai Aset*', 'Nilai', 'Harga', 'Value', 'Nilai Perolehan*', 'Harga Perolehan']:
+        for col in ['Nilai Aset','Nilai Aset*', 'Nilai', 'Harga', 'Value', 'Nilai Perolehan*','Nilai Perolehan', 'Harga Perolehan']:
             if col in df.columns:
                 nilai_col = col
                 break
@@ -286,4 +286,5 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
