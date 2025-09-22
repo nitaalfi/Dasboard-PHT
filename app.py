@@ -60,6 +60,13 @@ if uploaded_file:
             if col in df.columns:
                 kph_col = col
                 break
+
+        if kph_col:
+            kph_list = sorted(df[kph_col].dropna().astype(str).unique())
+            selected_kph = st.sidebar.multiselect("Pilih KPH", options=kph_list, default=kph_list)
+        else:
+            st.sidebar.error("Kolom KPH tidak ditemukan di data.")
+            selected_kph = []
         
         # Filter Kondisi - handle berbagai kemungkinan nama kolom
         kondisi_col = None
@@ -324,6 +331,7 @@ else:
 # Footer
 st.markdown("---")
 st.caption("Dashboard Monitoring Aset Perhutani - © 2024")
+
 
 
 
